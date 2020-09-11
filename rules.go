@@ -2,6 +2,7 @@ package cache
 
 import (
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -11,6 +12,11 @@ import (
 // CacheRule determines if a request should be cached
 type CacheRule interface {
 	matches(*http.Request, int, http.Header) bool
+}
+
+// PathRegexCacheRule matches if the request path matches given regex
+type PathRegexpCacheRule struct {
+	Regexp *regexp.Regexp
 }
 
 // PathCacheRule matches if the request starts with given Path
@@ -28,6 +34,10 @@ type HeaderCacheRule struct {
 var now = time.Now
 
 /* This rules decide if the request must be cached and are added to handler config if are present in Caddyfile */
+
+func (rule *PathRegexpCacheRule) matches(req *http.Request, statusCode int, respHeaders http.Header) bool {
+	return rule.Regexp.MatchString(req.URL.Path)
+}
 
 func (rule *PathCacheRule) matches(req *http.Request, statusCode int, respHeaders http.Header) bool {
 	return strings.HasPrefix(req.URL.Path, rule.Path)
